@@ -10,7 +10,6 @@ import image4 from './images/image4.jpg';
 // Create a context for managing authentication state
 const AuthContext = React.createContext();
 
-// Home Component
 const Home = ({ donationGoals }) => {
   return (
     <div style={{ textAlign: 'center' }}>
@@ -25,7 +24,6 @@ const Home = ({ donationGoals }) => {
   );
 };
 
-// Donation Form Component
 const DonationForm = () => {
   return (
     <div style={{ textAlign: 'center' }}>
@@ -40,7 +38,6 @@ const DonationForm = () => {
   );
 };
 
-// Donation Goals Page Component
 const DonationGoalsPage = ({ donationGoals }) => {
   useEffect(() => {
     createPieChart();
@@ -49,7 +46,6 @@ const DonationGoalsPage = ({ donationGoals }) => {
   const createPieChart = () => {
     const ctx = document.getElementById('donationPieChart');
     if (ctx && donationGoals.length > 0) {
-      // Destroy existing chart instance
       Chart.getChart(ctx)?.destroy();
 
       new Chart(ctx, {
@@ -95,7 +91,6 @@ const RequestHelpPage = () => {
   );
 };
 
-// User Profile Page Component
 const UserProfilePage = () => {
   return (
     <div style={{ textAlign: 'center' }}>
@@ -112,10 +107,8 @@ const UserProfilePage = () => {
   );
 };
 
-// Manage Profile Page Component
 const ManageProfilePage = () => {
   const handleDeleteProfile = () => {
-    // Logic to delete profile
   };
 
   return (
@@ -168,7 +161,9 @@ const App = () => {
         <div>
           <nav style={{ background: '#fff', color: '#000', padding: '10px', borderBottom: '1px solid #000' }}>
             <div style={{ textAlign: 'right', paddingRight: '10px' }}>
-              {user && <Link to="/profile" style={{ textDecoration: 'none', paddingRight: '10px' }}>Profile</Link>}
+              {user && (
+<Link to="/profile" style={{ textDecoration: 'none', color: '#ff6600', paddingRight: '10px', fontWeight: 'bold', fontSize: '12px' }}>Create/Manage Accounts</Link>
+              )}
             </div>
             <ul style={{ listStyleType: 'none', margin: '0', padding: '0', display: 'flex', justifyContent: 'space-evenly' }}>
               <li><Link to="/" style={{ textDecoration: 'none' }}>Home</Link></li>
