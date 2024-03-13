@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Link, useParams } from 'react-router-dom';
 import axios from 'axios';
 import Chart from 'chart.js/auto';
 import image1 from './images/image1.jpg';
@@ -24,69 +24,102 @@ const Home = ({ donationGoals }) => {
   );
 };
 
-const DonationForm = () => {
+const DonationForm = ({ onSubmit }) => {
+  const [name, setName] = useState('');
+  const [age, setAge] = useState('');
+  const [reason, setReason] = useState('');
+  const [amount, setAmount] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit({ name, age, reason, amount });
+    // Clear form fields after submission
+    setName('');
+    setAge('');
+    setReason('');
+    setAmount('');
+  };
+
   return (
     <div style={{ textAlign: 'center' }}>
       <h2>Donation Form</h2>
-      <form>
-        <input type="text" placeholder="Name" style={{ marginBottom: '10px' }} />
-        <input type="email" placeholder="Email" style={{ marginBottom: '10px' }} />
-        <input type="tel" placeholder="Phone Number" style={{ marginBottom: '10px' }} />
-        <button type="submit">Donate</button>
+      <form onSubmit={handleSubmit}>
+        <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" style={{ marginBottom: '10px' }} />
+        <input type="number" value={age} onChange={(e) => setAge(e.target.value)} placeholder="Age" style={{ marginBottom: '10px' }} />
+        <input type="text" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason for donation" style={{ marginBottom: '10px' }} />
+        <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Amount requested" style={{ marginBottom: '10px' }} />
+        <button type="submit">Create Goal</button>
       </form>
     </div>
   );
 };
 
-const DonationGoalsPage = ({ donationGoals }) => {
+const DonationGoalsPage = ({ donationGoals, addDonationGoal, deleteDonationGoal, donateToGoal }) => {
   useEffect(() => {
-    createPieChart();
+    createPieCharts();
   }, [donationGoals]);
 
-  const createPieChart = () => {
-    const ctx = document.getElementById('donationPieChart');
-    if (ctx && donationGoals.length > 0) {
-      Chart.getChart(ctx)?.destroy();
+  const createPieCharts = () => {
+    donationGoals.forEach(goal => {
+      const ctx = document.getElementById(`donationPieChart-${goal.id}`);
+      if (ctx) {
+        Chart.getChart(ctx)?.destroy();
 
-      new Chart(ctx, {
-        type: 'pie',
-        data: {
-          labels: donationGoals.map(goal => goal.title),
-          datasets: [{
-            label: 'Donation Goals',
-            data: donationGoals.map(goal => goal.amountRaised),
-            backgroundColor: [
-              'rgb(255, 99, 132)',
-              'rgb(54, 162, 235)',
-              'rgb(255, 205, 86)',
-              'rgb(75, 192, 192)'
-            ],
-            hoverOffset: 4
-          }]
-        }
-      });
-    }
+        new Chart(ctx, {
+          type: 'pie',
+          data: {
+            labels: ['Amount Raised', 'Amount Needed'],
+            datasets: [{
+              label: 'Donation Goal',
+              data: [goal.amountRaised, goal.amountNeeded - goal.amountRaised],
+              backgroundColor: [
+                'rgb(75, 192, 192)',
+                'rgb(255, 99, 132)'
+              ],
+              hoverOffset: 4
+            }]
+          }
+        });
+      }
+    });
+  };
+
+  const handleAddDonationGoal = (data) => {
+    const newGoal = {
+      id: Math.random().toString(36).substr(2, 9), // Generate a random ID for the new goal
+      title: data.reason,
+      description: `Requested by ${data.name}, ${data.age} years old`,
+      amountRaised: 0,
+      amountNeeded: parseFloat(data.amount)
+    };
+    addDonationGoal(newGoal);
+  };
+
+  const handleDeleteGoal = (id) => {
+    deleteDonationGoal(id);
+  };
+
+  const handleDonateToGoal = (id, amount) => {
+    donateToGoal(id, amount);
   };
 
   return (
     <div style={{ textAlign: 'center' }}>
       <h1>Donation Goals</h1>
-      <div style={{ width: '50%', margin: 'auto' }}>
-        <canvas id="donationPieChart" width="400" height="400"></canvas>
+      <DonationForm onSubmit={handleAddDonationGoal} />
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', marginTop: '20px' }}>
+        {donationGoals.map(goal => (
+          <div key={goal.id} style={{ border: '1px solid #ccc', borderRadius: '5px', padding: '10px', margin: '10px', cursor: 'pointer' }}>
+            <Link to={`/private-goal/${goal.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+              <h3>{goal.title}</h3>
+              <p>{goal.description}</p>
+              <canvas id={`donationPieChart-${goal.id}`} width="200" height="200"></canvas>
+              <p>Amount Raised: ${goal.amountRaised}</p>
+              <p>Amount Needed: ${goal.amountNeeded}</p>
+            </Link>
+          </div>
+        ))}
       </div>
-      {donationGoals.map(goal => (
-        <DonationGoalCard key={goal.id} goal={goal} />
-      ))}
-    </div>
-  );
-};
-
-// Request Help Page Component
-const RequestHelpPage = () => {
-  return (
-    <div style={{ textAlign: 'center' }}>
-      <h2>Request Help</h2>
-      <p>Form for requesting help goes here</p>
     </div>
   );
 };
@@ -109,6 +142,7 @@ const UserProfilePage = () => {
 
 const ManageProfilePage = () => {
   const handleDeleteProfile = () => {
+    // Implement deletion logic here
   };
 
   return (
@@ -119,7 +153,6 @@ const ManageProfilePage = () => {
   );
 };
 
-// Create Account Page Component
 const CreateAccountPage = () => {
   return (
     <div style={{ textAlign: 'center' }}>
@@ -129,62 +162,74 @@ const CreateAccountPage = () => {
   );
 };
 
-// Donation Goal Card Component
-const DonationGoalCard = ({ goal }) => {
+const PrivateDonationGoal = () => {
+  const { id } = useParams();
+
+  // Dummy data for testing
+  const donationGoal = {
+    id: id,
+    title: "Test Donation Goal",
+    description: "This is a test donation goal.",
+    amountRaised: 100,
+    amountNeeded: 500
+  };
+
   return (
-    <div style={{ border: '1px solid #ccc', borderRadius: '5px', padding: '10px', marginBottom: '10px' }}>
-      <h3>{goal.title}</h3>
-      <p>{goal.description}</p>
-      <p>Amount Raised: ${goal.amountRaised}</p>
+    <div style={{ textAlign: 'center' }}>
+      <h2>{donationGoal.title}</h2>
+      <p>{donationGoal.description}</p>
+      <p>Amount Raised: ${donationGoal.amountRaised}</p>
+      <p>Amount Needed: ${donationGoal.amountNeeded}</p>
+      <input type="number" placeholder="Enter amount to donate" />
+      <button>Donate</button>
     </div>
   );
 };
 
-// Main App Component
 const App = () => {
   const [donationGoals, setDonationGoals] = useState([]);
-  const [user, setUser] = useState(null);
 
-  useEffect(() => {
-    // Fetch donation goals from API
-    axios.get('/api/donation-goals')
-      .then(response => setDonationGoals(response.data))
-      .catch(error => console.error('Error fetching donation goals:', error));
+  const addDonationGoal = (goal) => {
+    setDonationGoals([...donationGoals, goal]);
+  };
 
-    // Simulate user authentication
-    setTimeout(() => setUser({}), 1000); // Remove user data to simulate logout
-  }, []);
+  const deleteDonationGoal = (id) => {
+    setDonationGoals(donationGoals.filter(goal => goal.id !== id));
+  };
+
+  const donateToGoal = (id, amount) => {
+    setDonationGoals(donationGoals.map(goal => {
+      if (goal.id === id) {
+        return { ...goal, amountRaised: parseFloat(goal.amountRaised) + parseFloat(amount) };
+      }
+      return goal;
+    }));
+  };
 
   return (
-    <AuthContext.Provider value={user}>
-      <Router>
-        <div>
-          <nav style={{ background: '#fff', color: '#000', padding: '10px', borderBottom: '1px solid #000' }}>
-            <div style={{ textAlign: 'right', paddingRight: '10px' }}>
-              {user && (
-<Link to="/profile" style={{ textDecoration: 'none', color: '#ff6600', paddingRight: '10px', fontWeight: 'bold', fontSize: '12px' }}>Create/Manage Accounts</Link>
-              )}
-            </div>
-            <ul style={{ listStyleType: 'none', margin: '0', padding: '0', display: 'flex', justifyContent: 'space-evenly' }}>
-              <li><Link to="/" style={{ textDecoration: 'none' }}>Home</Link></li>
-              <li><Link to="/donate" style={{ textDecoration: 'none' }}>Donate</Link></li>
-              <li><Link to="/donation-goals" style={{ textDecoration: 'none' }}>Donation Goals</Link></li>
-              <li><Link to="/request-help" style={{ textDecoration: 'none' }}>Request Help</Link></li>
-            </ul>
-          </nav>
+    <Router>
+      <div>
+        <nav style={{ background: '#fff', color: '#000', padding: '10px', borderBottom: '1px solid #000' }}>
+          <div style={{ textAlign: 'right', paddingRight: '10px' }}>
+            <Link to="/user-profile" style={{ textDecoration: 'none', color: '#ff6600', paddingRight: '10px', fontWeight: 'bold', fontSize: '12px' }}>Create/Manage Accounts</Link>
+          </div>
+          <ul style={{ listStyleType: 'none', margin: '0', padding: '0', display: 'flex', justifyContent: 'space-evenly' }}>
+            <li><Link to="/" style={{ textDecoration: 'none' }}>Home</Link></li>
+            <li><Link to="/donation-goals" style={{ textDecoration: 'none' }}>Donation Goals</Link></li>
+            <li><Link to="/create-account" style={{ textDecoration: 'none' }}>Create Account</Link></li>
+          </ul>
+        </nav>
 
-          <Routes>
-            <Route path="/" element={<Home donationGoals={donationGoals} />} />
-            <Route path="/donate" element={<DonationForm />} />
-            <Route path="/donation-goals" element={<DonationGoalsPage donationGoals={donationGoals} />} />
-            <Route path="/request-help" element={<RequestHelpPage />} />
-            <Route path="/profile" element={<UserProfilePage />} />
-            <Route path="/manage-profile" element={<ManageProfilePage />} />
-            <Route path="/create-account" element={<CreateAccountPage />} />
-          </Routes>
-        </div>
-      </Router>
-    </AuthContext.Provider>
+        <Routes>
+          <Route path="/" element={<Home donationGoals={donationGoals} />} />
+          <Route path="/donation-goals" element={<DonationGoalsPage donationGoals={donationGoals} addDonationGoal={addDonationGoal} deleteDonationGoal={deleteDonationGoal} donateToGoal={donateToGoal} />} />
+          <Route path="/user-profile" element={<UserProfilePage />} />
+          <Route path="/manage-profile" element={<ManageProfilePage />} />
+          <Route path="/create-account" element={<CreateAccountPage />} />
+          <Route path="/private-goal/:id" element={<PrivateDonationGoal />} />
+        </Routes>
+      </div>
+    </Router>
   );
 };
 
